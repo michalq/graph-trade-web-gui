@@ -9,8 +9,91 @@
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
     <link rel="stylesheet" href="css/main.css">
+
+    <script src="components/fetch/fetch.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
 
+<div class="container">
+    <div class="row">
+        <h2>Most valuable paths list</h2>
+    </div>
+    <div class="row">
+        <div class="six columns">
+            <label for="currency">Currency to sell</label>
+            <input class="u-full-width" placeholder="ltc" id="currency" type="text" value="ltc" name="currency">
+        </div>
+        <div class="six columns">
+            <label for="sell-currency">Amount</label>
+            <input class="u-full-width" placeholder="1" id="amount" type="text" value="1" name="amount">
+        </div>
+        <div>
+            <button class="button-primary" id="search-paths" type="submit">Search</button>
+        </div>
+    </div>
+    <div class="row">
+        <table class="u-full-width">
+            <thead>
+                <tr>
+                    <th>Final balance</th>
+                    <th>Currencies</th>
+                    <th>Logs</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <ul>
+                            <li>1.02 LTC</li>
+                        </ul>
+                        <button>more</button>
+                    </td>
+                    <td>cny, omg, btc, ltc</td>
+                    <td>
+                        <ol>
+                            <li>Buy 1LTC for 0.02BTC</li>
+                            <li>Buy 1LTC for 0.02BTC</li>
+                            <li>Buy 1LTC for 0.02BTC</li>
+                        </ol>
+                    </td>
+                    <td>
+                        <button class="button-primary">Start trading</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+
+    var searchPathButton = document.getElementById('search-paths');
+    searchPathButton.addEventListener("click", function(e) {
+        var currency = document.getElementById('currency').value;
+        var amount = parseFloat(document.getElementById('amount').value);
+        fetchPaths(
+            currency,
+            amount,
+            renderPaths
+        );
+    });
+
+    var fetchPaths = function(currency, amount, callback) {
+        fetch('http://localhost:3000/api/v1/paths/initial/ltc/amount/1')
+            .then(function(response) {
+                return response.json()
+            }).then(function(json) {
+                callback(json);
+            }).catch(function(ex) {
+                console.error(ex)
+            });
+      };
+
+    var renderPaths = function(paths) {
+        console.log(paths);
+    };
+
+    </script>
 </body>
 </html>
