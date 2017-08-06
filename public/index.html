@@ -6,11 +6,10 @@
     <meta name="author" content="">
     <meta name="keywords" content="">
 
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/main.css">
 
-    <script src="components/fetch/fetch.js" type="text/javascript" charset="utf-8" async defer></script>
+    <script src="../components/fetch/fetch.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
 
@@ -38,30 +37,28 @@
                     <th>Final balance</th>
                     <th>Revenue (%)</th>
                     <th>Currencies</th>
-                    <th>Logs</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="paths-container">
-                <tr class="pattern" id="path-pattern">
-                    <td>
-                        {balances}
-                        <br>
-                        <button>more</button>
-                    </td>
-                    <td>{percentRevenue}%</td>
-                    <td>{currencies}</td>
-                    <td>
-                        <button>show</button>
-                    </td>
-                    <td>
-                        <button class="button-primary">Start trading</button>
-                    </td>
-                </tr>
-            </tbody>
+            <tbody id="paths-container"></tbody>
         </table>
     </div>
 </div>
+
+<template id="path-pattern">
+    <tr>
+        <td>
+            {balances}
+        </td>
+        <td>{percentRevenue}%</td>
+        <td>{currencies}</td>
+        <td>
+            <button class="button-primary">Start trading</button>
+            <button>Show more</button>
+        </td>
+    </tr>
+    <tr></tr>
+</template>
 
 <script>
 
@@ -98,7 +95,7 @@
             currPath;
 
         for(var i = 0; i < paths.length; i++) {
-            pathDom = document.getElementById('path-pattern').cloneNode(true);
+            pathDom = document.querySelector('#path-pattern').cloneNode(true);
             pathDom.classList.remove('pattern');
             pathDom.removeAttribute('id');
             innerHtml = pathDom.innerHTML;
@@ -120,7 +117,7 @@
                 .replace('{percentRevenue}', percentRevenue);
 
             pathDom.innerHTML = innerHtml;
-            pathsContainer.appendChild(pathDom);
+            pathsContainer.appendChild(pathDom.content);
         }
     };
 
