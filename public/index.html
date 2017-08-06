@@ -36,26 +36,23 @@
             <thead>
                 <tr>
                     <th>Final balance</th>
+                    <th>Revenue (%)</th>
                     <th>Currencies</th>
                     <th>Logs</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
+            <tbody id="paths-container">
+                <tr class="pattern" id="path-pattern">
                     <td>
-                        <ul>
-                            <li>1.02 LTC</li>
-                        </ul>
+                        {balances}
+                        <br>
                         <button>more</button>
                     </td>
-                    <td>cny, omg, btc, ltc</td>
+                    <td>{percentRevenue}%</td>
+                    <td>{currencies}</td>
                     <td>
-                        <ol>
-                            <li>Buy 1LTC for 0.02BTC</li>
-                            <li>Buy 1LTC for 0.02BTC</li>
-                            <li>Buy 1LTC for 0.02BTC</li>
-                        </ol>
+                        <button>show</button>
                     </td>
                     <td>
                         <button class="button-primary">Start trading</button>
@@ -80,18 +77,51 @@
     });
 
     var fetchPaths = function(currency, amount, callback) {
-        fetch('http://localhost:3000/api/v1/paths/initial/ltc/amount/1')
+        fetch('http://localhost:3000/api/v1/paths/initial/' + currency + '/amount/' + amount)
             .then(function(response) {
                 return response.json()
             }).then(function(json) {
-                callback(json);
+                callback(json, currency, amount);
             }).catch(function(ex) {
                 console.error(ex)
             });
       };
 
-    var renderPaths = function(paths) {
-        console.log(paths);
+    var renderPaths = function(response, originCurrency, originAmount) {
+        var paths = response.paths,
+            pathsContainer = document.getElementById('paths-container'),
+            pathDom,
+            innerHtml,
+            balances,
+            currencies,
+            percentRevenue,
+            currPath;
+
+        for(var i = 0; i < paths.length; i++) {
+            pathDom = document.getElementById('path-pattern').cloneNode(true);
+            pathDom.classList.remove('pattern');
+            pathDom.removeAttribute('id');
+            innerHtml = pathDom.innerHTML;
+
+            currPath = paths[i];
+            currencies = currPath.currencies.join(', ');
+            percentRevenue = Math.floor((currPath.balance[originCurrency] - originAmount / originAmount) * 10000) / 100;
+
+            balances = '<p>' + currPath.balance[originCurrency] + originCurrency.toUpperCase() + '<p>';
+            balances += '<ul hidden>'
+            for(var balance in currPath.balance) {
+                balances += '<li>' + currPath.balance[balance] + ' ' + balance.toUpperCase() + '</li>';
+            }
+            balances += '</ul>'
+
+            innerHtml = innerHtml
+                .replace('{balances}', balances)
+                .replace('{currencies}', currencies)
+                .replace('{percentRevenue}', percentRevenue);
+
+            pathDom.innerHTML = innerHtml;
+            pathsContainer.appendChild(pathDom);
+        }
     };
 
     </script>
