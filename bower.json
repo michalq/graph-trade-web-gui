@@ -1,0 +1,24 @@
+{
+  "name": "graph-trade-web-gui",
+  "authors": [
+    "Michał Kutrzeba <kutrzeba.michal@gmail.com>"
+  ],
+  "description": "",
+  "main": "index.html",
+  "keywords": [
+    "graph",
+    "trade",
+    "web",
+    "gui"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
