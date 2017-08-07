@@ -59,7 +59,11 @@
         <td>{percentRevenue}%</td>
         <td>{currencies}</td>
         <td>
-            <button class="btn btn-secondary" data-action-open-modal="#tpl-details-modal">More</button>
+            <button
+              class="btn btn-secondary"
+              data-action-open-modal="#tpl-details-modal"
+              data-path-index="{pathIndex}"
+              >More</button>
         </td>
     </tr>
 </template>
@@ -69,7 +73,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{pairs_details}</h5>
+          <h5 class="modal-title">Path details</h5>
           <button type="button" class="close" data-action-close-modal="#details-modal">
             <span>&times;</span>
           </button>
@@ -77,20 +81,9 @@
         <div class="modal-body">
           <div class="container-fluid">
             <div class="row">
-              <div class="col-md-4">
-                <h4>Path</h4>
-                <ol>
-                  <li>1</li>
-                  <li>2</li>
-                </ol>
-              </div>
-              <div class="col-md-4">
+              <div class="col-md-8">
                 <h4>Steps</h4>
-                <ol>
-                  <li>Step 1</li>
-                  <li>Step 2</li>
-                  <li>Step 3</li>
-                </ol>
+                <ol id="trade-steps"></ol>
               </div>
               <div class="col-md-4">
                 <h4>Details</h4>
@@ -113,6 +106,7 @@
 </template>
 
 <script>
+    var jsonData = {};
     var searchPathButton = document.getElementById('search-paths');
     searchPathButton.addEventListener("click", function(e) {
         var currency = document.getElementById('currency').value;
@@ -132,6 +126,7 @@
             })
             .then(function(json) {
                 if (typeof json.error == 'undefined') {
+                    jsonData = json;
                     callback(json, currency, amount);
                 } else {
                     showError(json.error.message);
@@ -170,6 +165,7 @@
             }
 
             innerHtml = innerHtml
+                .replace('{pathIndex}', i)
                 .replace('{balances}', balances)
                 .replace('{currencies}', currencies)
                 .replace('{percentRevenue}', percentRevenue);
@@ -224,10 +220,19 @@
         openModalTrigger = openModalTriggers[i];
         openModalTrigger.addEventListener('click', function(e) {
           var targetName = e.target.getAttribute('data-action-open-modal');
-          var selector = document.querySelector(targetName);
+          var pathIndex = e.target.getAttribute('data-path-index');
+          var selector = document.querySelector(targetName).cloneNode(true);
+          var tradeStepsSelector = selector.content.querySelector('#trade-steps');
+          // var innerHtml = selector.innerHTML;
+
+          var tradeSteps = jsonData.paths[pathIndex].logs;
+          for(var i = 0; i < tradeSteps.length; i++) {
+            tradeStepsSelector.innerHTML += '<li>' + tradeSteps[i] + '</li>';
+          }
+
           document
             .querySelector('body')
-            .appendChild(selector.cloneNode(true).content);
+            .appendChild(selector.content);
           Modals.reloadCloseTriggers();
         });
       }
