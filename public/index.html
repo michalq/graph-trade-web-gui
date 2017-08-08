@@ -106,39 +106,72 @@
 </template>
 
 <script>
-    var jsonData = {};
-    var searchPathButton = document.getElementById('search-paths');
-    searchPathButton.addEventListener("click", function(e) {
-        var currency = document.getElementById('currency').value;
-        var amount = parseFloat(document.getElementById('amount').value);
+/**
+ *
+ */
+class PathsService {
+  constructor() {
+    this.paths = {};
+    this.triggerSearcherSelector = document.querySelector('#search-paths');
+    this.currencySelector = document.querySelector('#currency');
+    this.amountSelector = document.querySelector('#amount');
 
-        fetchPaths(
-            currency,
-            amount,
-            renderPaths
-        );
+    this.initEvents();
+  }
+
+  getCurrency() {
+    return this.currencySelector.value;
+  }
+
+  getAmount() {
+    return parseFloat(this.amountSelector.value);
+  }
+
+  initEvents() {
+    this.triggerSearcherSelector.addEventListener("click", e => {
+      this.fetchPaths(
+        this.getCurrency(),
+        this.getAmount(),
+        (response, currency, amount) => {
+          const renderer = new PathsRenderer(response, currency, amount);
+          renderer.renderPaths();
+        }
+      );
     });
+  }
 
-    var fetchPaths = function(currency, amount, callback) {
-        fetch('http://localhost:3000/api/v1/paths/initial/' + currency + '/amount/' + amount)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(json) {
-                if (typeof json.error == 'undefined') {
-                    jsonData = json;
-                    callback(json, currency, amount);
-                } else {
-                    showError(json.error.message);
-                }
-            }).catch(function(ex) {
-                showError(ex.message);
-            });
-      };
+  fetchPaths(currency, amount, callback) {
+    fetch('http://localhost:3000/api/v1/paths/initial/' + currency + '/amount/' + amount)
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(json) {
+        if (typeof json.error == 'undefined') {
+          jsonData = json;
+          callback(json, currency, amount);
+        } else {
+          showError(json.error.message);
+        }
+      }).catch(function(ex) {
+        showError(ex.message);
+      });
+  }
+}
 
-    var renderPaths = function(response, originCurrency, originAmount) {
-        var paths = response.paths,
-            pathsContainer = document.getElementById('paths-container'),
+/**
+ *
+ */
+class PathsRenderer {
+  constructor(response, originCurrency, originAmount) {
+    this.pathsContainer = document.querySelector('#paths-container');
+    this.pathsContainer.innerHTML = '';
+    this.response = response;
+    this.currency = originCurrency;
+    this.amount = originAmount;
+  }
+
+  renderPaths() {
+        let paths = this.response.paths,
             pathDom,
             innerHtml,
             balances,
@@ -149,6 +182,7 @@
             highestRevenue = 0,
             rowId;
 
+
         for(var i = 0; i < paths.length; i++) {
             pathDom = document.querySelector('#path-pattern').cloneNode(true);
             innerHtml = pathDom.innerHTML;
@@ -157,7 +191,7 @@
             currPath = paths[i];
             currencies = currPath.currencies.join(', ');
             percentRevenue = currPath.percentRevenue;
-            balances = currPath.balance[originCurrency] + originCurrency.toUpperCase();
+            balances = currPath.balance[this.currency] + this.currency.toUpperCase();
 
             if (percentRevenue > highestRevenue) {
                 highestRevenueId = rowId;
@@ -172,7 +206,7 @@
 
             pathDom.innerHTML = innerHtml;
             pathDom.content.querySelector('tr').setAttribute('id', rowId)
-            pathsContainer.appendChild(pathDom.content);
+            this.pathsContainer.appendChild(pathDom.content);
         }
 
         if (highestRevenueId) {
@@ -181,65 +215,78 @@
 
         Modals.reload();
     };
+}
 
-    var showError = function(message) {
-        var errorBlock = document.getElementById('error-block');
-        var pathsContainer = document.getElementById('paths-container');
-        errorBlock.removeAttribute('hidden');
-        errorBlock.innerHTML = message;
-        pathsContainer.innerHTML = '';
-    };
+let paths = new PathsService;
 
-    var hideError = function() {
-        var errorBlock = document.getElementById('error-block');
-        errorBlock.setAttribute('hidden');
-        errorBlock.innerHTML = '';
+var jsonData = {};
+
+var showError = function(message) {
+    var errorBlock = document.getElementById('error-block');
+    var pathsContainer = document.getElementById('paths-container');
+    errorBlock.removeAttribute('hidden');
+    errorBlock.innerHTML = message;
+    pathsContainer.innerHTML = '';
+};
+
+var hideError = function() {
+    var errorBlock = document.getElementById('error-block');
+    errorBlock.setAttribute('hidden');
+    errorBlock.innerHTML = '';
+}
+
+/**
+ *
+ */
+class Modals {
+  /**
+   *
+   */
+  static reloadCloseTriggers() {
+    var closeModalTriggers = document.querySelectorAll('[data-action-close-modal]');
+    var closeModalTrigger;
+    for (var i = 0; i < closeModalTriggers.length; i++) {
+      closeModalTrigger = closeModalTriggers[i];
+      closeModalTrigger.addEventListener('click', function(e) {
+        var targetName = e.target.getAttribute('data-action-close-modal');
+        document.querySelector(targetName).remove();
+      });
     }
+  }
 
-    var Modals = function() {
-      //
-    };
+  /**
+   *
+   */
+  static reload() {
+    Modals.reloadCloseTriggers();
+    var openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
+    var openModalTrigger;
+    for (var i = 0; i < openModalTriggers.length; i++) {
+      openModalTrigger = openModalTriggers[i];
+      openModalTrigger.addEventListener('click', function(e) {
+        var targetName = e.target.getAttribute('data-action-open-modal');
+        var pathIndex = e.target.getAttribute('data-path-index');
+        var path = jsonData.paths[pathIndex];
+        var selector = document.querySelector(targetName).cloneNode(true);
 
-    Modals.reloadCloseTriggers = function() {
-      var closeModalTriggers = document.querySelectorAll('[data-action-close-modal]');
-      var closeModalTrigger;
-      for (var i = 0; i < closeModalTriggers.length; i++) {
-        closeModalTrigger = closeModalTriggers[i];
-        closeModalTrigger.addEventListener('click', function(e) {
-          var targetName = e.target.getAttribute('data-action-close-modal');
-          document.querySelector(targetName).remove();
-        });
-      }
-    };
+        var percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
+        percentRevenueSelector.innerHTML = path.percentRevenue;
 
-    Modals.reload = function() {
-      Modals.reloadCloseTriggers();
-      var openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
-      var openModalTrigger;
-      for (var i = 0; i < openModalTriggers.length; i++) {
-        openModalTrigger = openModalTriggers[i];
-        openModalTrigger.addEventListener('click', function(e) {
-          var targetName = e.target.getAttribute('data-action-open-modal');
-          var pathIndex = e.target.getAttribute('data-path-index');
-          var path = jsonData.paths[pathIndex];
-          var selector = document.querySelector(targetName).cloneNode(true);
+        var tradeStepsSelector = selector.content.querySelector('[data-trade-steps]');
+        var tradeSteps = path.logs;
+        for(var i = 0; i < tradeSteps.length; i++) {
+          tradeStepsSelector.innerHTML += '<li>' + tradeSteps[i] + '</li>';
+        }
 
-          var percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
-          percentRevenueSelector.innerHTML = path.percentRevenue;
+        document
+          .querySelector('body')
+          .appendChild(selector.content);
+        Modals.reloadCloseTriggers();
+      });
+    }
+  }
+}
 
-          var tradeStepsSelector = selector.content.querySelector('[data-trade-steps]');
-          var tradeSteps = path.logs;
-          for(var i = 0; i < tradeSteps.length; i++) {
-            tradeStepsSelector.innerHTML += '<li>' + tradeSteps[i] + '</li>';
-          }
-
-          document
-            .querySelector('body')
-            .appendChild(selector.content);
-          Modals.reloadCloseTriggers();
-        });
-      }
-    };
-    </script>
+</script>
 </body>
 </html>
