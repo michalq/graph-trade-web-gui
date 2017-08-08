@@ -83,13 +83,13 @@
             <div class="row">
               <div class="col-md-8">
                 <h4>Steps</h4>
-                <ol id="trade-steps"></ol>
+                <ol data-trade-steps></ol>
               </div>
               <div class="col-md-4">
                 <h4>Details</h4>
                 <dl>
                   <dt>Revenue</dt>
-                  <dd>10%</dd>
+                  <dd><strong data-percent-revenue></strong>%</dd>
                 </dl>
               </div>
             </div>
@@ -156,7 +156,7 @@
 
             currPath = paths[i];
             currencies = currPath.currencies.join(', ');
-            percentRevenue = Math.floor((currPath.balance[originCurrency] - originAmount / originAmount) * 10000) / 100;
+            percentRevenue = currPath.percentRevenue;
             balances = currPath.balance[originCurrency] + originCurrency.toUpperCase();
 
             if (percentRevenue > highestRevenue) {
@@ -221,11 +221,14 @@
         openModalTrigger.addEventListener('click', function(e) {
           var targetName = e.target.getAttribute('data-action-open-modal');
           var pathIndex = e.target.getAttribute('data-path-index');
+          var path = jsonData.paths[pathIndex];
           var selector = document.querySelector(targetName).cloneNode(true);
-          var tradeStepsSelector = selector.content.querySelector('#trade-steps');
-          // var innerHtml = selector.innerHTML;
 
-          var tradeSteps = jsonData.paths[pathIndex].logs;
+          var percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
+          percentRevenueSelector.innerHTML = path.percentRevenue;
+
+          var tradeStepsSelector = selector.content.querySelector('[data-trade-steps]');
+          var tradeSteps = path.logs;
           for(var i = 0; i < tradeSteps.length; i++) {
             tradeStepsSelector.innerHTML += '<li>' + tradeSteps[i] + '</li>';
           }
