@@ -1,71 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Graph Trade Web GUI</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="keywords" content="">
+  <title>Graph Trade Web GUI</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="keywords" content="">
 
-    <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/main.css">
 
-    <!-- <script src="../components/fetch/fetch.js" type="text/javascript" charset="utf-8" async defer></script> -->
+  <!-- <script src="../components/fetch/fetch.js" type="text/javascript" charset="utf-8" async defer></script> -->
 </head>
 <body>
 
-<div hidden class="alert alert-danger" id="error-block" role="alert">
-  <strong>Oh snap!</strong> Change a few things up and try submitting again.
-</div>
+<div hidden class="alert alert-danger" id="error-block" role="alert"></div>
 
 <div class="container">
-    <div class="row">
-        <h2>Most valuable paths list</h2>
-    </div>
-    <div class="row">
-    <form>
+  <div class="row">
+    <h2>Most valuable paths list</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-3">
+      <form>
         <div class="form-group">
-            <label for="currency">Currency to sell</label>
-            <input class="form-control" placeholder="ltc" id="currency" type="text" value="ltc" name="currency">
+          <label for="currency">Currency to sell</label>
+          <input class="form-control" placeholder="ltc" id="currency" type="text" value="ltc" name="currency">
         </div>
         <div class="form-group">
-            <label for="sell-currency">Amount</label>
-            <input class="form-control" placeholder="1" id="amount" type="text" value="1" name="amount">
+          <label for="sell-currency">Amount</label>
+          <input class="form-control" placeholder="1" id="amount" type="text" value="1" name="amount">
         </div>
         <div>
-            <button class="btn btn-primary" id="search-paths" type="button">Search</button>
+          <button class="btn btn-primary" id="search-paths" type="button">Search</button>
         </div>
-        </form>
+      </form>
     </div>
-    <div class="row">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Final balance</th>
-                    <th>Revenue (%)</th>
-                    <th>Currencies</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="paths-container"></tbody>
-        </table>
+    <div class="col-md-9">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Final balance</th>
+            <th>Revenue (%)</th>
+            <th>Currencies</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="paths-container"></tbody>
+      </table>
     </div>
+  </div>
 </div>
 
 <template id="path-pattern">
-    <tr>
-        <td>
-            {balances}
-        </td>
-        <td>{percentRevenue}%</td>
-        <td>{currencies}</td>
-        <td>
-            <button
-              class="btn btn-secondary"
-              data-action-open-modal="#tpl-details-modal"
-              data-path-index="{pathIndex}"
-              >More</button>
-        </td>
-    </tr>
+  <tr>
+    <td>
+      {balances}
+    </td>
+    <td>{percentRevenue}%</td>
+    <td>{currencies}</td>
+    <td>
+      <button
+        class="btn btn-secondary"
+        data-action-open-modal="#tpl-details-modal"
+        data-path-index="{pathIndex}"
+        >More</button>
+    </td>
+  </tr>
 </template>
 
 <template id="tpl-details-modal">
@@ -81,23 +81,51 @@
         <div class="modal-body">
           <div class="container-fluid">
             <div class="row">
-              <div class="col-md-8">
+              <div class="col-md-12">
                 <h4>Steps</h4>
+                <table class="table table-hover table-bordered table-sm" data-trade-steps-table>
+                  <thead class="thead-default">
+                    <tr>
+                      <th>#</th>
+                      <th class="text-right">buying</th>
+                      <th class="text-left">&curren;</th>
+                      <th class="text-right">for</th>
+                      <th class="text-left">&curren;</th>
+                      <th class="text-right">unit price</th>
+                      <th class="text-left">&curren;</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
                 <ol data-trade-steps></ol>
               </div>
-              <div class="col-md-4">
+            </div>
+            <div class="row">
+              <div class="col-md-6">
                 <h4>Details</h4>
-                <dl>
-                  <dt>Revenue</dt>
-                  <dd><strong data-percent-revenue></strong>%</dd>
-                </dl>
+                <table class="table table-bordered" data-trade-steps-table>
+                  <thead class="thead-default">
+                    <tr>
+                      <td>Revenue</td>
+                      <td>Currencies</td>
+                      <td>Final balance</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span data-percent-revenue></span>%</td>
+                      <td data-currencies>…</td>
+                      <td data-final-balance>…</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary float-left">Auto trade</button>
-          <button type="button" class="btn btn-secondary">Refresh</button>
+          <!-- <button type="button" class="btn btn-primary float-left">Auto trade</button> -->
+          <!-- <button type="button" class="btn btn-secondary">Refresh</button> -->
           <button type="button" class="btn btn-secondary" data-action-close-modal="#details-modal">Close</button>
         </div>
       </div>
@@ -171,49 +199,49 @@ class PathsRenderer {
   }
 
   renderPaths() {
-        let paths = this.response.paths,
-            pathDom,
-            innerHtml,
-            balances,
-            currencies,
-            percentRevenue,
-            currPath,
-            highestRevenueId = null,
-            highestRevenue = 0,
-            rowId;
+    let paths = this.response.paths,
+      pathDom,
+      innerHtml,
+      balances,
+      currencies,
+      percentRevenue,
+      currPath,
+      highestRevenueId = null,
+      highestRevenue = 0,
+      rowId;
 
 
-        for(var i = 0; i < paths.length; i++) {
-            pathDom = document.querySelector('#path-pattern').cloneNode(true);
-            innerHtml = pathDom.innerHTML;
-            rowId = 'paths-row-' + i;
+    for(var i = 0; i < paths.length; i++) {
+      pathDom = document.querySelector('#path-pattern').cloneNode(true);
+      innerHtml = pathDom.innerHTML;
+      rowId = 'paths-row-' + i;
 
-            currPath = paths[i];
-            currencies = currPath.currencies.join(', ');
-            percentRevenue = currPath.percentRevenue;
-            balances = currPath.balance[this.currency] + this.currency.toUpperCase();
+      currPath = paths[i];
+      currencies = currPath.currencies.join(', ');
+      percentRevenue = currPath.percentRevenue;
+      balances = currPath.balance[this.currency] + this.currency.toUpperCase();
 
-            if (percentRevenue > highestRevenue) {
-                highestRevenueId = rowId;
-                highestRevenue = percentRevenue;
-            }
+      if (percentRevenue > highestRevenue) {
+        highestRevenueId = rowId;
+        highestRevenue = percentRevenue;
+      }
 
-            innerHtml = innerHtml
-                .replace('{pathIndex}', i)
-                .replace('{balances}', balances)
-                .replace('{currencies}', currencies)
-                .replace('{percentRevenue}', percentRevenue);
+      innerHtml = innerHtml
+        .replace('{pathIndex}', i)
+        .replace('{balances}', balances)
+        .replace('{currencies}', currencies)
+        .replace('{percentRevenue}', percentRevenue);
 
-            pathDom.innerHTML = innerHtml;
-            pathDom.content.querySelector('tr').setAttribute('id', rowId)
-            this.pathsContainer.appendChild(pathDom.content);
-        }
+      pathDom.innerHTML = innerHtml;
+      pathDom.content.querySelector('tr').setAttribute('id', rowId)
+      this.pathsContainer.appendChild(pathDom.content);
+    }
 
-        if (highestRevenueId) {
-            document.getElementById(highestRevenueId).classList.add('table-success');
-        }
+    if (highestRevenueId) {
+      document.getElementById(highestRevenueId).classList.add('table-success');
+    }
 
-        Modals.reload();
+      Modals.reload();
     };
 }
 
@@ -222,17 +250,17 @@ let paths = new PathsService;
 var jsonData = {};
 
 var showError = function(message) {
-    var errorBlock = document.getElementById('error-block');
-    var pathsContainer = document.getElementById('paths-container');
-    errorBlock.removeAttribute('hidden');
-    errorBlock.innerHTML = message;
-    pathsContainer.innerHTML = '';
+  var errorBlock = document.getElementById('error-block');
+  var pathsContainer = document.getElementById('paths-container');
+  errorBlock.removeAttribute('hidden');
+  errorBlock.innerHTML = message;
+  pathsContainer.innerHTML = '';
 };
 
 var hideError = function() {
-    var errorBlock = document.getElementById('error-block');
-    errorBlock.setAttribute('hidden');
-    errorBlock.innerHTML = '';
+  var errorBlock = document.getElementById('error-block');
+  errorBlock.setAttribute('hidden');
+  errorBlock.innerHTML = '';
 }
 
 /**
@@ -269,13 +297,26 @@ class Modals {
         var path = jsonData.paths[pathIndex];
         var selector = document.querySelector(targetName).cloneNode(true);
 
-        var percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
+        const percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
+        const currenciesSelector = selector.content.querySelector('[data-currencies]');
+        const finalBalanceSelector = selector.content.querySelector('[data-final-balance]');
         percentRevenueSelector.innerHTML = path.percentRevenue;
+        currenciesSelector.innerHTML = path.currencies.join(', ');
+        finalBalanceSelector.innerHTML = path.balance['ltc'];
 
-        var tradeStepsSelector = selector.content.querySelector('[data-trade-steps]');
-        var tradeSteps = path.logs;
+        var tradeStepsSelector = selector.content.querySelector('[data-trade-steps-table] tbody');
+        var tradeSteps = path.path;
         for(var i = 0; i < tradeSteps.length; i++) {
-          tradeStepsSelector.innerHTML += '<li>' + tradeSteps[i] + '</li>';
+          tradeStepsSelector.innerHTML +=
+              '<tr>'
+              + '<td class="text-center">' + (i + 1) + '</td>'
+              + '<td class="text-right">' + tradeSteps[i].buyAmount + '</td>'
+              + '<td class="text-left">' + tradeSteps[i].buy.toUpperCase() + '</td>'
+              + '<td class="text-right">' + tradeSteps[i].sellAmount + '</td>'
+              + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
+              + '<td class="text-right">' + tradeSteps[i].price + '</td>'
+              + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
+            + '</tr>';
         }
 
         document
