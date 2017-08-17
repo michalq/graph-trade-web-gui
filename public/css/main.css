@@ -1,3 +1,32 @@
 .modal {
   display:block;
 }
+
+body {
+    background-color: #eee;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-right: 1px solid #eee;
+    background: #292b2c !important;
+    color: #f5f5f5;
+}
+
+.sidebar-secondary {
+    position: fixed;
+    top: 0px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
