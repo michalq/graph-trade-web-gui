@@ -7,11 +7,10 @@
   <meta name="keywords" content="">
 
   <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../components/components-font-awesome/css/font-awesome.min.css">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-
-<div hidden class="alert alert-danger" id="error-block" role="alert"></div>
 
 <div class="container-fluid">
   <nav class="col-sm-3 col-md-2 hidden-xs-down bg-faded sidebar">
@@ -50,6 +49,10 @@
     </form>
   </div>
   <!-- End - Optional block -->
+
+  <div class="col-sm-9 col-md-10 pt-3 offset-md-2 offset-sm-3">
+    <div hidden class="alert alert-danger" id="error-block" role="alert"></div>
+  </div>
 
   <!-- Without optional block: offset-md-2 offset-sm-3 -->
   <main class="col-sm-6 col-md-7 pt-3 offset-md-5 offset-sm-6">
@@ -104,6 +107,7 @@
                   <thead class="thead-default">
                     <tr>
                       <th>#</th>
+                      <th>pair</th>
                       <th class="text-right">buying</th>
                       <th class="text-left">&curren;</th>
                       <th class="text-right">for</th>
@@ -142,8 +146,12 @@
               <div class="col-md-6">
                 <h4>Actions</h4>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-primary">Refresh</button>
-                  <button type="button" class="btn btn-primary">Save</button>
+                  <button type="button" class="btn btn-primary">
+                    <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
+                  </button>
+                  <button type="button" class="btn btn-primary">
+                    <i class="fa fa-cloud-download" aria-hidden="true"></i> Save
+                  </button>
                 </div>
               </div>
             </div>
@@ -331,9 +339,15 @@ class Modals {
         var tradeStepsSelector = selector.content.querySelector('[data-trade-steps-table] tbody');
         var tradeSteps = path.path;
         for(var i = 0; i < tradeSteps.length; i++) {
+          const tradeStep = tradeSteps[i];
           tradeStepsSelector.innerHTML +=
               '<tr>'
               + '<td class="text-center">' + (i + 1) + '</td>'
+              + '<td>'
+                + '<a target="_blank" rel="noopener noreferrer" href="' + tradeStep.tradeUrl + '">'
+                  + '<i class="fa fa-external-link"></i> ' + tradeStep.originPair
+                + '</a>'
+              + '</td>'
               + '<td class="text-right">' + tradeSteps[i].buyAmount + '</td>'
               + '<td class="text-left">' + tradeSteps[i].buy.toUpperCase() + '</td>'
               + '<td class="text-right">' + tradeSteps[i].sellAmount + '</td>'
