@@ -5,6 +5,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
   <meta name="keywords" content="">
+  <meta charset="utf-8" />
 
   <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="../components/components-font-awesome/css/font-awesome.min.css">
@@ -41,10 +42,16 @@
       </div>
       <div class="form-group">
         <label for="sell-currency">Amount</label>
-        <input class="form-control" placeholder="1" id="amount" type="text" value="1" name="amount">
+        <input class="form-control" placeholder="Type amount to sell…" id="amount" type="text" value="1" name="amount">
+      </div>
+      <div class="form-group">
+        <label for="ignore-currency">Ignore currencies</label>
+        <input class="form-control" placeholder="Type currencies to ignore…" id="ignore-currenies" type="text" value="tix" name="ignoreCurrencies">
       </div>
       <div>
-        <button class="btn btn-primary" id="search-paths" type="button">Search</button>
+        <button class="btn btn-primary" id="search-paths" type="button">
+          <i class="fa fa-search"></i> Search
+        </button>
       </div>
     </form>
   </div>
@@ -90,7 +97,7 @@
 
 <template id="tpl-details-modal">
   <div class="modal" id="details-modal">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Path details</h5>
@@ -108,12 +115,13 @@
                     <tr>
                       <th>#</th>
                       <th>pair</th>
-                      <th class="text-right">buying</th>
+                      <th class="text-right">Buying</th>
                       <th class="text-left">&curren;</th>
-                      <th class="text-right">for</th>
+                      <th class="text-right">For</th>
                       <th class="text-left">&curren;</th>
-                      <th class="text-right">unit price</th>
+                      <th class="text-right">Unit price</th>
                       <th class="text-left">&curren;</th>
+                      <th class="text-right">Fee</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -175,6 +183,7 @@ class PathsService {
     this.triggerSearcherSelector = document.querySelector('#search-paths');
     this.currencySelector = document.querySelector('#currency');
     this.amountSelector = document.querySelector('#amount');
+    this.ignoreCurrenciesSelector = document.querySelector('#ignore-currenies');
 
     this.initEvents();
   }
@@ -187,11 +196,16 @@ class PathsService {
     return parseFloat(this.amountSelector.value);
   }
 
+  getIgnoredCurrencies() {
+    return this.ignoreCurrenciesSelector.value;
+  }
+
   initEvents() {
     this.triggerSearcherSelector.addEventListener("click", e => {
       this.fetchPaths(
         this.getCurrency(),
         this.getAmount(),
+        this.getIgnoredCurrencies(),
         (response, currency, amount) => {
           const renderer = new PathsRenderer(response, currency, amount);
           renderer.renderPaths();
@@ -200,8 +214,21 @@ class PathsService {
     });
   }
 
-  fetchPaths(currency, amount, callback) {
-    fetch('http://localhost:3000/api/v1/paths/initial/' + currency + '/amount/' + amount)
+  /**
+   *
+   * @param {String} currency
+   * @param {Number} amount
+   * @param {String} ignoreCurrencies
+   * @param {Function} callback
+   * @return {Void}
+   */
+  fetchPaths(currency, amount, ignoreCurrencies, callback) {
+    fetch(
+      'http://localhost:3000/api/v1/paths'
+      + '/initial/' + currency
+      + '/amount/' + amount
+      + (ignoreCurrencies ? ('/ignore/' + ignoreCurrencies) : '')
+      )
       .then(function(response) {
         return response.json();
       })
@@ -354,6 +381,7 @@ class Modals {
               + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
               + '<td class="text-right">' + tradeSteps[i].price + '</td>'
               + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
+              + '<td class="text-left">' + tradeSteps[i].fee.amount + ' ' + tradeSteps[i].sell.toUpperCase() + '</td>'
             + '</tr>';
         }
 

@@ -2,6 +2,12 @@
   display:block;
 }
 
+@media (min-width: 992px) {
+  .modal-xlg {
+    max-width: 1200px;
+  }
+}
+
 body {
     background-color: #eee;
 }
