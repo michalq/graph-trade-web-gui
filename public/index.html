@@ -48,6 +48,12 @@
         <label for="ignore-currency">Ignore currencies</label>
         <input class="form-control" placeholder="Type currencies to ignore…" id="ignore-currenies" type="text" value="tix" name="ignoreCurrencies">
       </div>
+      <div class="form-check">
+        <label class="form-check-label">
+          <input class="form-check-input" id="include-fee" checked type="checkbox" value="1">
+          Include fee
+        </label>
+      </div>
       <div>
         <button class="btn btn-primary" id="search-paths" type="button">
           <i class="fa fa-search"></i> Search
@@ -184,6 +190,7 @@ class PathsService {
     this.currencySelector = document.querySelector('#currency');
     this.amountSelector = document.querySelector('#amount');
     this.ignoreCurrenciesSelector = document.querySelector('#ignore-currenies');
+    this.includeFeeSelector = document.querySelector('#include-fee');
 
     this.initEvents();
   }
@@ -200,12 +207,17 @@ class PathsService {
     return this.ignoreCurrenciesSelector.value;
   }
 
+  getIncludeFee() {
+    return this.includeFeeSelector.checked;
+  }
+
   initEvents() {
     this.triggerSearcherSelector.addEventListener("click", e => {
       this.fetchPaths(
         this.getCurrency(),
         this.getAmount(),
         this.getIgnoredCurrencies(),
+        this.getIncludeFee(),
         (response, currency, amount) => {
           const renderer = new PathsRenderer(response, currency, amount);
           renderer.renderPaths();
@@ -219,15 +231,18 @@ class PathsService {
    * @param {String} currency
    * @param {Number} amount
    * @param {String} ignoreCurrencies
+   * @param {Bool} includeFee
+   *
    * @param {Function} callback
    * @return {Void}
    */
-  fetchPaths(currency, amount, ignoreCurrencies, callback) {
+  fetchPaths(currency, amount, ignoreCurrencies, includeFee, callback) {
     fetch(
       'http://localhost:3000/api/v1/paths'
       + '/initial/' + currency
       + '/amount/' + amount
       + (ignoreCurrencies ? ('/ignore/' + ignoreCurrencies) : '')
+      + (includeFee ? ('/fee/' + (includeFee ? 1 : 0)) : '')
       )
       .then(function(response) {
         return response.json();
