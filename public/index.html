@@ -46,7 +46,7 @@
       </div>
       <div class="form-group">
         <label for="ignore-currency">Ignore currencies</label>
-        <input class="form-control" placeholder="Type currencies to ignore…" id="ignore-currenies" type="text" value="tix" name="ignoreCurrencies">
+        <input class="form-control" placeholder="Type currencies to ignore…" id="ignore-currenies" type="text" value="tix,brx,xrp,doc" name="ignoreCurrencies">
       </div>
       <div class="form-check">
         <label class="form-check-label">
@@ -160,7 +160,7 @@
               <div class="col-md-6">
                 <h4>Actions</h4>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-primary">
+                  <button type="button" class="btn btn-primary" data-action="refresh">
                     <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
                   </button>
                   <button type="button" class="btn btn-primary">
@@ -244,19 +244,125 @@ class PathsService {
       + (ignoreCurrencies ? ('/ignore/' + ignoreCurrencies) : '')
       + (includeFee ? ('/fee/' + (includeFee ? 1 : 0)) : '')
       )
-      .then(function(response) {
+      .then(response => {
         return response.json();
       })
-      .then(function(json) {
+      .then(json => {
         if (typeof json.error == 'undefined') {
           jsonData = json;
           callback(json, currency, amount);
         } else {
           showError(json.error.message);
         }
-      }).catch(function(ex) {
+      }).catch(ex => {
         showError(ex.message);
       });
+  }
+
+  /**
+   * Calculates single path.
+   *
+   * @param {Object} path
+   *
+   * @return {Promise}
+   */
+  static fetchPath(path) {
+    const params = {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        method: "POST",
+        body: JSON.stringify([])
+    };
+
+    return fetch('http://localhost:3000/api/v1/path', params)
+      .then(data => {
+        return data.json();
+      })
+      .catch(e => {
+        showError(e.message);
+      });
+  }
+}
+
+class GraphTradeComponent {
+  constructor(targetName, pathIndex) {
+    this.targetName = targetName;
+    this.pathIndex = pathIndex;
+    this.path = jsonData.paths[this.pathIndex];
+    this.selector = null;
+    this.globalId = 'asdffdsasfafdsa';
+  }
+
+  getGlobalId() {
+    return this.globalId;
+  }
+
+  /**
+   * @return {DOMObject}
+   */
+  getWindowSelector(recreate) {
+    if (recreate || !this.selector) {
+      const oldBlock = document.querySelector("[data-global-id='" + this.getGlobalId() + "']");
+      if (oldBlock) {
+        oldBlock.remove();
+      }
+
+      this.selector = document.querySelector(this.targetName).cloneNode(true);
+      this.selector.content.getElementById("details-modal").setAttribute('data-global-id', this.getGlobalId());
+    }
+
+    return this.selector;
+  }
+
+  refreshData() {
+    return PathsService.fetchPath(this.path).then(data => {
+      console.log(data);
+      this.render();
+    });
+  }
+
+  /**
+   *
+   */
+  render() {
+    const selector = this.getWindowSelector(true),
+      percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]'),
+      currenciesSelector = selector.content.querySelector('[data-currencies]'),
+      finalBalanceSelector = selector.content.querySelector('[data-final-balance]');
+
+    percentRevenueSelector.innerHTML = this.path.percentRevenue;
+    currenciesSelector.innerHTML = this.path.currencies.join(', ');
+    finalBalanceSelector.innerHTML = this.path.balance['ltc'];
+
+    let tradeStepsSelector = selector.content.querySelector('[data-trade-steps-table] tbody');
+    const tradeSteps = this.path.path;
+    for(let i = 0; i < tradeSteps.length; i++) {
+      const tradeStep = tradeSteps[i];
+      tradeStepsSelector.innerHTML +=
+          '<tr>'
+          + '<td class="text-center">' + (i + 1) + '</td>'
+          + '<td>'
+            + '<a target="_blank" rel="noopener noreferrer" href="' + tradeStep.tradeUrl + '">'
+              + '<i class="fa fa-external-link"></i> ' + tradeStep.originPair
+            + '</a>'
+          + '</td>'
+          + '<td class="text-right">' + tradeSteps[i].buyAmount + '</td>'
+          + '<td class="text-left">' + tradeSteps[i].buy.toUpperCase() + '</td>'
+          + '<td class="text-right">' + tradeSteps[i].sellAmount + '</td>'
+          + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
+          + '<td class="text-right">' + tradeSteps[i].price + '</td>'
+          + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
+          + '<td class="text-left">' + tradeSteps[i].fee.amount + ' ' + tradeSteps[i].sell.toUpperCase() + '</td>'
+        + '</tr>';
+    }
+
+    document
+      .querySelector('body')
+      .appendChild(selector.content);
+
+    Modals.reloadCloseTriggers(this);
   }
 }
 
@@ -344,13 +450,17 @@ class Modals {
   /**
    *
    */
-  static reloadCloseTriggers() {
-    var closeModalTriggers = document.querySelectorAll('[data-action-close-modal]');
-    var closeModalTrigger;
-    for (var i = 0; i < closeModalTriggers.length; i++) {
+  static reloadCloseTriggers(component) {
+    const closeModalTriggers = document.querySelectorAll('[data-action-close-modal]');
+    const refreshSelector = document.querySelector('[data-action="refresh"]');
+
+    refreshSelector.addEventListener('click', e => component.render());
+
+    let closeModalTrigger;
+    for (let i = 0; i < closeModalTriggers.length; i++) {
       closeModalTrigger = closeModalTriggers[i];
-      closeModalTrigger.addEventListener('click', function(e) {
-        var targetName = e.target.getAttribute('data-action-close-modal');
+      closeModalTrigger.addEventListener('click', e => {
+        const targetName = e.target.getAttribute('data-action-close-modal');
         document.querySelector(targetName).remove();
       });
     }
@@ -360,50 +470,16 @@ class Modals {
    *
    */
   static reload() {
-    Modals.reloadCloseTriggers();
+    // Modals.reloadCloseTriggers();
     var openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
     var openModalTrigger;
     for (var i = 0; i < openModalTriggers.length; i++) {
       openModalTrigger = openModalTriggers[i];
-      openModalTrigger.addEventListener('click', function(e) {
-        var targetName = e.target.getAttribute('data-action-open-modal');
-        var pathIndex = e.target.getAttribute('data-path-index');
-        var path = jsonData.paths[pathIndex];
-        var selector = document.querySelector(targetName).cloneNode(true);
-
-        const percentRevenueSelector = selector.content.querySelector('[data-percent-revenue]');
-        const currenciesSelector = selector.content.querySelector('[data-currencies]');
-        const finalBalanceSelector = selector.content.querySelector('[data-final-balance]');
-        percentRevenueSelector.innerHTML = path.percentRevenue;
-        currenciesSelector.innerHTML = path.currencies.join(', ');
-        finalBalanceSelector.innerHTML = path.balance['ltc'];
-
-        var tradeStepsSelector = selector.content.querySelector('[data-trade-steps-table] tbody');
-        var tradeSteps = path.path;
-        for(var i = 0; i < tradeSteps.length; i++) {
-          const tradeStep = tradeSteps[i];
-          tradeStepsSelector.innerHTML +=
-              '<tr>'
-              + '<td class="text-center">' + (i + 1) + '</td>'
-              + '<td>'
-                + '<a target="_blank" rel="noopener noreferrer" href="' + tradeStep.tradeUrl + '">'
-                  + '<i class="fa fa-external-link"></i> ' + tradeStep.originPair
-                + '</a>'
-              + '</td>'
-              + '<td class="text-right">' + tradeSteps[i].buyAmount + '</td>'
-              + '<td class="text-left">' + tradeSteps[i].buy.toUpperCase() + '</td>'
-              + '<td class="text-right">' + tradeSteps[i].sellAmount + '</td>'
-              + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
-              + '<td class="text-right">' + tradeSteps[i].price + '</td>'
-              + '<td class="text-left">' + tradeSteps[i].sell.toUpperCase() + '</td>'
-              + '<td class="text-left">' + tradeSteps[i].fee.amount + ' ' + tradeSteps[i].sell.toUpperCase() + '</td>'
-            + '</tr>';
-        }
-
-        document
-          .querySelector('body')
-          .appendChild(selector.content);
-        Modals.reloadCloseTriggers();
+      openModalTrigger.addEventListener('click', e => {
+        (new GraphTradeComponent(
+          e.target.getAttribute('data-action-open-modal'),
+          e.target.getAttribute('data-path-index')
+        )).refreshData();
       });
     }
   }
