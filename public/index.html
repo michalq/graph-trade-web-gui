@@ -9,7 +9,9 @@
 
   <link rel="stylesheet" href="../components/bootstrap/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="../components/components-font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../components/sweetalert2/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="css/main.css">
+  <script src="../components/sweetalert2/dist/sweetalert2.min.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
 
@@ -87,7 +89,7 @@
 
 <template id="path-pattern">
   <tr>
-    <td class="text-center"><input type="checkbox" value=""></td>
+    <td class="text-center"><input type="checkbox" disabled name="saved" value=""></td>
     <td>
       {balances}
     </td>
@@ -165,7 +167,7 @@
                   <button type="button" class="btn btn-primary" data-action="refresh">
                     <i class="fa fa-refresh" aria-hidden="true"></i> Refresh
                   </button>
-                  <button type="button" class="btn btn-primary">
+                  <button type="button" class="btn btn-primary" data-action="save">
                     <i class="fa fa-cloud-download" aria-hidden="true"></i> Save
                   </button>
                 </div>
@@ -297,6 +299,10 @@ class GraphTradeComponent {
     this.globalId = 'asdffdsasfafdsa';
   }
 
+  getPath() {
+    return this.path;
+  }
+
   getGlobalId() {
     return this.globalId;
   }
@@ -362,8 +368,26 @@ class GraphTradeComponent {
     }
 
     const refreshButtonSelector = selector.content.querySelector('[data-action="refresh"]');
-    refreshButtonSelector.addEventListener('click', e => {
+    refreshButtonSelector.addEventListener('click', _ => {
       this.refresh();
+    });
+
+    const saveButtonSelector = selector.content.querySelector('[data-action="save"]');
+    saveButtonSelector.addEventListener('click', _ => {
+      let myPaths = {};
+      if (null !== localStorage.getItem('myPaths')) {
+        myPaths = JSON.parse(localStorage.getItem('myPaths'));
+      }
+
+      if (typeof myPaths[this.getPath().guid] === 'undefined') {
+        myPaths[this.getPath().guid] = this.getPath();
+        swal('Yay!', 'Path were saved!', 'info')
+      } else {
+        delete myPaths[this.getPath().guid];
+        swal('Info', 'Path were removed from saved paths.', 'info')
+      }
+
+      localStorage.setItem('myPaths', JSON.stringify(myPaths));
     });
 
     document
@@ -398,7 +422,7 @@ class PathsRenderer {
       highestRevenue = 0,
       rowId;
 
-
+    const myPaths = JSON.parse(localStorage.getItem('myPaths'));
     for(var i = 0; i < paths.length; i++) {
       pathDom = document.querySelector('#path-pattern').cloneNode(true);
       innerHtml = pathDom.innerHTML;
@@ -423,14 +447,19 @@ class PathsRenderer {
       pathDom.innerHTML = innerHtml;
       pathDom.content.querySelector('tr').setAttribute('id', rowId)
       this.pathsContainer.appendChild(pathDom.content);
+
+      if (typeof myPaths[currPath.guid] !== 'undefined') {
+        document.getElementById(rowId).classList.add('table-info');
+        document.getElementById(rowId).querySelector('[name="saved"]').checked = true;
+      }
     }
 
     if (highestRevenueId) {
       document.getElementById(highestRevenueId).classList.add('table-success');
     }
 
-      Modals.reload();
-    };
+    Modals.reload();
+  };
 }
 
 let paths = new PathsService;
@@ -460,9 +489,6 @@ class Modals {
    */
   static reloadCloseTriggers(component) {
     const closeModalTriggers = document.querySelectorAll('[data-action-close-modal]');
-    const refreshSelector = document.querySelector('[data-action="refresh"]');
-
-    refreshSelector.addEventListener('click', e => component.render());
 
     let closeModalTrigger;
     for (let i = 0; i < closeModalTriggers.length; i++) {
@@ -480,7 +506,7 @@ class Modals {
   static reload() {
     // Modals.reloadCloseTriggers();
     const openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
-    let openModalTrigger, refreshButtonSelector;
+    let openModalTrigger;
     for (var i = 0; i < openModalTriggers.length; i++) {
       openModalTrigger = openModalTriggers[i];
       openModalTrigger.addEventListener('click', e => {
