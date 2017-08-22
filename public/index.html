@@ -72,6 +72,7 @@
     <table class="table table-hover">
       <thead>
         <tr>
+          <th><i class="fa fa-star"></i></th>
           <th>Final balance</th>
           <th>Revenue (%)</th>
           <th>Currencies</th>
@@ -86,6 +87,7 @@
 
 <template id="path-pattern">
   <tr>
+    <td class="text-center"><input type="checkbox" value=""></td>
     <td>
       {balances}
     </td>
@@ -273,7 +275,7 @@ class PathsService {
           'Content-Type': 'application/json'
         },
         method: "POST",
-        body: JSON.stringify([])
+        body: JSON.stringify(path)
     };
 
     return fetch('http://localhost:3000/api/v1/path', params)
@@ -316,9 +318,10 @@ class GraphTradeComponent {
     return this.selector;
   }
 
-  refreshData() {
-    return PathsService.fetchPath(this.path).then(data => {
-      console.log(data);
+  refresh() {
+    const body = {path: this.path.path};
+    return PathsService.fetchPath(body).then(data => {
+      this.path = data.data;
       this.render();
     });
   }
@@ -357,6 +360,11 @@ class GraphTradeComponent {
           + '<td class="text-left">' + tradeSteps[i].fee.amount + ' ' + tradeSteps[i].sell.toUpperCase() + '</td>'
         + '</tr>';
     }
+
+    const refreshButtonSelector = selector.content.querySelector('[data-action="refresh"]');
+    refreshButtonSelector.addEventListener('click', e => {
+      this.refresh();
+    });
 
     document
       .querySelector('body')
@@ -460,7 +468,7 @@ class Modals {
     for (let i = 0; i < closeModalTriggers.length; i++) {
       closeModalTrigger = closeModalTriggers[i];
       closeModalTrigger.addEventListener('click', e => {
-        const targetName = e.target.getAttribute('data-action-close-modal');
+        const targetName = e.currentTarget.getAttribute('data-action-close-modal');
         document.querySelector(targetName).remove();
       });
     }
@@ -471,15 +479,15 @@ class Modals {
    */
   static reload() {
     // Modals.reloadCloseTriggers();
-    var openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
-    var openModalTrigger;
+    const openModalTriggers = document.querySelectorAll('[data-action-open-modal]');
+    let openModalTrigger, refreshButtonSelector;
     for (var i = 0; i < openModalTriggers.length; i++) {
       openModalTrigger = openModalTriggers[i];
       openModalTrigger.addEventListener('click', e => {
         (new GraphTradeComponent(
           e.target.getAttribute('data-action-open-modal'),
           e.target.getAttribute('data-path-index')
-        )).refreshData();
+        )).render();
       });
     }
   }
